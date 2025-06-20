@@ -10,8 +10,9 @@ jobs:
   sonar_scan:
     name: SonarQube Static Analysis
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Set up JDK 17
@@ -26,22 +27,20 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
 
-      - name: SonarQube Scan
+      - name: Install Sonar Scanner CLI
+        run: |
+          wget -qO sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
+          unzip sonar-scanner.zip -d $HOME
+          echo "$HOME/sonar-scanner-4.8.0.2856-linux/bin" >> $GITHUB_PATH
+
+      - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          # Install Sonar Scanner CLI (if not already installed)
-          if ! command -v sonar-scanner &> /dev/null
-          then
-            wget -qO- https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip > sonar-scanner.zip
-            unzip sonar-scanner.zip -d $HOME
-            export PATH="$HOME/sonar-scanner-4.8.0.2856-linux/bin:$PATH"
-          fi
-
           sonar-scanner \
             -Dsonar.projectKey=testsonar1 \
             -Dsonar.sources=. \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${SONAR_TOKEN}
-
-
+            -Dsonar.host.url=${SONAR_HOST_URL} \
+            -Dsonar.login=${SONAR_TOKEN} \
+            -Dsonar.projectName=TestSonarProject

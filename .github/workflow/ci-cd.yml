@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for tx-umbrella
+name: CI/CD Pipeline
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
           fi
 
           sonar-scanner \
-            -Dsonar.projectKey=tx-umbrella \
+            -Dsonar.projectKey=testsonar1 \
             -Dsonar.sources=. \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${SONAR_TOKEN}

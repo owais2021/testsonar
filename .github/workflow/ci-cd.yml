@@ -1,0 +1,47 @@
+name: CI/CD Pipeline for tx-umbrella
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  sonar_scan:
+    name: SonarQube Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+
+      - name: SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          # Install Sonar Scanner CLI (if not already installed)
+          if ! command -v sonar-scanner &> /dev/null
+          then
+            wget -qO- https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip > sonar-scanner.zip
+            unzip sonar-scanner.zip -d $HOME
+            export PATH="$HOME/sonar-scanner-4.8.0.2856-linux/bin:$PATH"
+          fi
+
+          sonar-scanner \
+            -Dsonar.projectKey=tx-umbrella \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${SONAR_TOKEN}
+
+

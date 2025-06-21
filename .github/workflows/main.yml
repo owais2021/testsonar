@@ -21,7 +21,7 @@ jobs:
           java-version: 17
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v1.10
+        uses: SonarSource/sonarcloud-github-action@v1
         with:
           projectKey: owais2021_testsonar  
           organization: owais2021

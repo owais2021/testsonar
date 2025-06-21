@@ -1,4 +1,4 @@
-name: SonarQube Analysis
+name: SonarQube Analysis (Manual Docker)
 
 on:
   push:
@@ -9,29 +9,31 @@ jobs:
   sonarqube:
     runs-on: ubuntu-latest
 
-    services:
-      sonarqube:
-        image: sonarqube:community
-        ports:
-          - 9000:9000
-        options: >-
-          --health-cmd="curl -f http://localhost:9000/api/system/health || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=30
-
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Wait for SonarQube to be healthy
+      - name: Start SonarQube in Background
+        run: |
+          docker run -d --name sonarqube \
+            -p 9000:9000 \
+            sonarqube:community
+
+      - name: Wait for SonarQube to be ready
         run: |
           echo "Waiting for SonarQube to be healthy..."
-          until curl -s http://localhost:9000/api/system/health | grep -q '"status":"UP"'; do
-            echo "SonarQube is not ready yet. Sleeping for 5 seconds..."
+          for i in {1..60}; do
+            STATUS=$(curl -s http://localhost:9000/api/system/health | jq -r .status || echo "DOWN")
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "UP" ]; then
+              echo "SonarQube is UP!"
+              break
+            fi
             sleep 5
           done
-          echo "SonarQube is UP!"
+
+      - name: Install JQ (for JSON parsing)
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5.2.0

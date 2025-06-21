@@ -1,24 +1,45 @@
-name: SonarQube Analysis
+name: SonarQube Analysis (Manual Docker)
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    branches:
+      - main
 
 jobs:
-  sonarQubeScan:
-    name: SonarQube Scan
+  sonarqube:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: SonarQube Scan
-      uses: SonarSource/sonarqube-scan-action@v5.2.0
-      with:
-        args: >
-          -Dsonar.projectKey=testsonar1
-          -Dsonar.sources=.
-          -Dsonar.host.url=http://localhost:9000
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      - name: Start SonarQube in Background
+        run: |
+          docker run -d --name sonarqube \
+            -p 9000:9000 \
+            sonarqube:community
+
+      - name: Wait for SonarQube to be ready
+        run: |
+          echo "Waiting for SonarQube to be healthy..."
+          for i in {1..60}; do
+            STATUS=$(curl -s http://localhost:9000/api/system/health | jq -r .status || echo "DOWN")
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "UP" ]; then
+              echo "SonarQube is UP!"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Install JQ (for JSON parsing)
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
+        with:
+          args: >
+            -Dsonar.projectKey=testsonar1
+            -Dsonar.sources=.
+            -Dsonar.host.url=http://localhost:9000
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}

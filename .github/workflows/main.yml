@@ -1,45 +1,28 @@
-name: SonarQube Analysis (Manual Docker)
+name: SonarCloud Scan
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  sonarqube:
+  sonarcloud:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Start SonarQube in Background
-        run: |
-          docker run -d --name sonarqube \
-            -p 9000:9000 \
-            sonarqube:community
-
-      - name: Wait for SonarQube to be ready
-        run: |
-          echo "Waiting for SonarQube to be healthy..."
-          for i in {1..60}; do
-            STATUS=$(curl -s http://localhost:9000/api/system/health | jq -r .status || echo "DOWN")
-            echo "Status: $STATUS"
-            if [ "$STATUS" = "UP" ]; then
-              echo "SonarQube is UP!"
-              break
-            fi
-            sleep 5
-          done
-
-      - name: Install JQ (for JSON parsing)
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5.2.0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
         with:
-          args: >
-            -Dsonar.projectKey=testsonar1
-            -Dsonar.sources=.
-            -Dsonar.host.url=http://localhost:9000
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+          distribution: temurin
+          java-version: 17
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v1.10
+        with:
+          projectKey: owais2021_testsonar  
+          organization: owais2021
+          token: ${{ secrets.SONAR_TOKEN }}

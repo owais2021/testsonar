@@ -18,10 +18,10 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5.2.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.local_sonar_token }}
+          SONAR_HOST_URL: http://localhost:9000/projects
         with:
           args: >
             -Dsonar.projectKey=testsonar1
             -Dsonar.sources=.
-            -Dsonar.host.url=${{ secrets.local_sonar_token }}
+            -Dsonar.host.url=http://localhost:9000
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}

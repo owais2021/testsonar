@@ -1,4 +1,4 @@
-name: SonarQube Scan
+name: SonarQube Analysis
 
 on:
   push:
@@ -9,18 +9,35 @@ jobs:
   sonarqube:
     runs-on: ubuntu-latest
 
+    services:
+      sonarqube:
+        image: sonarqube:community
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd="curl -f http://localhost:9000/api/system/health || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Wait for SonarQube to be healthy
+        run: |
+          echo "Waiting for SonarQube to be healthy..."
+          until curl -s http://localhost:9000/api/system/health | grep -q '"status":"UP"'; do
+            echo "SonarQube is not ready yet. Sleeping for 5 seconds..."
+            sleep 5
+          done
+          echo "SonarQube is UP!"
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5.2.0
-        env:
-          SONAR_TOKEN: ${{ secrets.LOCAL_SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.LOCAL_SONAR_HOST }}
         with:
           args: >
             -Dsonar.projectKey=testsonar1
             -Dsonar.sources=.
-            -Dsonar.host.url=${{ secrets.LOCAL_SONAR_HOST }}
-            -Dsonar.login=${{ secrets.LOCAL_SONAR_TOKEN }}
+            -Dsonar.host.url=http://localhost:9000
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}

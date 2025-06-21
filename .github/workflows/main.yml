@@ -1,4 +1,5 @@
-name: SonarCloud
+name: SonarQube Analysis
+
 on:
   push:
     branches:
@@ -7,30 +8,37 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  sonarcloud:
+  sonar_scan:
+    name: SonarQube Scan
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Set up JDK 17
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for PR and branch metadata
+
+      - name: Set up Java (required by SonarScanner)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: 11
 
-      - name: Cache SonarCloud packages
+      - name: Cache SonarQube cache
         uses: actions/cache@v3
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
 
-      - name: SonarCloud Scan
+      - name: Run SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          ./gradlew sonarqube \
-            -Dsonar.projectKey=testsonar1 \
-            -Dsonar.organization=testsonar \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}         # From your repo secrets
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}   # e.g. https://sonarcloud.io or http://your-sonarqube
+        with:
+          args: >
+            -Dsonar.projectKey=testsonar1
+            -Dsonar.organization=testsonar       # Only for SonarCloud
+            -Dsonar.sources=.
+            -Dsonar.host.url=${{ env.SONAR_HOST_URL }}
+            -Dsonar.login=${{ env.SONAR_TOKEN }}

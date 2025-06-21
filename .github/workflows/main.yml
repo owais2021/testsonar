@@ -34,11 +34,12 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5.2.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}         # From your repo secrets
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}   # e.g. https://sonarcloud.io or http://your-sonarqube
+          SONAR_HOST_URL: ${{ secrets.local_sonar_token }}   # e.g. https://sonarcloud.io or http://your-sonarqube
         with:
           args: >
             -Dsonar.projectKey=testsonar1
             -Dsonar.organization=testsonar       # Only for SonarCloud
             -Dsonar.sources=.
-            -Dsonar.host.url=${{ env.SONAR_HOST_URL }}
+            -Dsonar.host.url=${{ env.local_sonar_token }}
             -Dsonar.login=${{ env.SONAR_TOKEN }}
+            

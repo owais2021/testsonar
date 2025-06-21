@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: SonarCloud Scan
+      - name: Run SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
